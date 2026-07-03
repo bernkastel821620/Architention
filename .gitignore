@@ -1,0 +1,10 @@
+.arch-attention/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+.env
+.DS_Store
