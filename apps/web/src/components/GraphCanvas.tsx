@@ -143,7 +143,7 @@ export function GraphCanvas({ graph, searchScores, selectedNodeId, onSelectNode 
     root.add(grid);
 
     if (layoutMode === "ast") {
-      addAstGuides(root, graph, layout, spread);
+      addAstGuides(root, graph, spread);
     }
 
     const nodeById = new Map(layout.map((node) => [node.id, node]));
@@ -667,7 +667,7 @@ function isSelectedEdge(edge: GraphEdge, selectedNodeId: string | null) {
   return Boolean(selectedNodeId && (edge.source === selectedNodeId || edge.target === selectedNodeId));
 }
 
-function addAstGuides(root: THREE.Group, graph: GraphPayload, layout: PositionedNode[], spread: number) {
+function addAstGuides(root: THREE.Group, graph: GraphPayload, spread: number) {
   const packages = Array.from(new Set(graph.nodes.map((node) => node.packageName))).sort();
   const packageBranches = buildPackageBranchLayout(packages, spread);
   const branches = Array.from(packageBranches.byPackage.values());
@@ -714,14 +714,6 @@ function addAstGuides(root: THREE.Group, graph: GraphPayload, layout: Positioned
       branchFolder.position.set(x, branchTopY + 0.2, z);
       root.add(branchFolder);
     }
-  }
-
-  for (const node of layout) {
-    const branch = packageBranches.byPackage.get(node.packageName);
-    if (!branch) {
-      continue;
-    }
-    root.add(createPackageMembershipConnector(node, branch, spread));
   }
 
   const roleLabelX = wallMetrics.minX + 0.72 * spread;
@@ -795,42 +787,6 @@ function createPackageBackWall(
     new THREE.LineBasicMaterial({ color: "#bccbd6", transparent: true, opacity: 0.74 })
   ));
 
-  return group;
-}
-
-function createPackageMembershipConnector(node: PositionedNode, branch: PackageBranchInfo, spread: number) {
-  const group = new THREE.Group();
-  const anchor = new THREE.Vector3(branch.x, node.y, branch.z - 0.34 * spread);
-  const target = new THREE.Vector3(node.x, node.y, node.z);
-  const distance = anchor.distanceTo(target);
-  const lift = Math.min(0.18 * spread, Math.max(0.05, distance * 0.22));
-  const midpoint = anchor.clone().lerp(target, 0.5).add(new THREE.Vector3(0, lift, 0));
-  const curve = new THREE.CatmullRomCurve3([anchor, midpoint, target]);
-
-  const halo = new THREE.Mesh(
-    new THREE.TubeGeometry(curve, 8, 0.024, 8, false),
-    new THREE.MeshBasicMaterial({
-      color: "#cffafe",
-      transparent: true,
-      opacity: 0.08,
-      depthWrite: false
-    })
-  );
-  const core = new THREE.Mesh(
-    new THREE.TubeGeometry(curve, 8, 0.013, 8, false),
-    new THREE.MeshStandardMaterial({
-      color: "#a5f3fc",
-      emissive: "#67e8f9",
-      emissiveIntensity: 0.12,
-      metalness: 0.02,
-      roughness: 0.34,
-      transparent: true,
-      opacity: 0.3,
-      depthWrite: false
-    })
-  );
-
-  group.add(halo, core);
   return group;
 }
 
@@ -967,7 +923,7 @@ function createPackageFolderMarker(label: string, variant: PackageMarkerVariant)
   group.add(tab);
   group.add(createBoxOutline(tabGeometry, outlineMaterial, tab.position));
 
-  const labelSprite = createLabelSprite(label, false, {
+  const labelPlane = createLabelPlane(label, {
     fillStyle: isDomain ? "#331f04" : "#073642",
     strokeStyle: isDomain ? "rgba(255, 250, 235, 0.96)" : "rgba(238, 251, 255, 0.96)",
     backgroundStyle: isDomain ? "rgba(255, 244, 204, 0.68)" : "rgba(226, 250, 255, 0.68)",
@@ -977,9 +933,9 @@ function createPackageFolderMarker(label: string, variant: PackageMarkerVariant)
     width: 320,
     height: 72
   });
-  labelSprite.position.set(0, -0.02, bodyDepth * 0.5 + 0.07);
-  labelSprite.scale.set(isDomain ? 1.18 : 1, isDomain ? 0.3 : 0.26, 1);
-  group.add(labelSprite);
+  labelPlane.position.set(0, -0.02, bodyDepth * 0.5 + 0.07);
+  labelPlane.scale.set(isDomain ? 1.18 : 1, isDomain ? 0.3 : 0.26, 1);
+  group.add(labelPlane);
 
   return group;
 }
@@ -1002,7 +958,41 @@ function createBoxOutline(geometry: THREE.BoxGeometry, material: THREE.LineBasic
   return outline;
 }
 
-function createLabelSprite(label: string, selected: boolean, style: LabelStyle = {}) {
+function createLabelPlane(label: string, style: LabelStyle = {}) {
+  const group = new THREE.Group();
+  const frontTexture = createLabelTexture(label, false, style);
+  const backTexture = createLabelTexture(label, false, style);
+  const front = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({
+      map: frontTexture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      side: THREE.FrontSide
+    })
+  );
+  const back = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1),
+    new THREE.MeshBasicMaterial({
+      map: backTexture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      side: THREE.FrontSide
+    })
+  );
+
+  front.position.z = 0.004;
+  back.position.z = -0.004;
+  back.rotation.y = Math.PI;
+  front.renderOrder = 20;
+  back.renderOrder = 20;
+  group.add(front, back);
+  return group;
+}
+
+function createLabelTexture(label: string, selected: boolean, style: LabelStyle = {}) {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   const width = style.width ?? 256;
@@ -1040,6 +1030,11 @@ function createLabelSprite(label: string, selected: boolean, style: LabelStyle =
   }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function createLabelSprite(label: string, selected: boolean, style: LabelStyle = {}) {
+  const texture = createLabelTexture(label, selected, style);
   const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(1.52, 0.38, 1);
