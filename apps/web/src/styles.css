@@ -155,16 +155,16 @@ small {
   white-space: nowrap;
 }
 
-.workspace-grid {
+.workspace-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(520px, 1fr) minmax(320px, 420px);
   gap: 18px;
-  align-items: start;
 }
 
-.left-column {
+.lower-grid {
   display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(360px, 1.15fr) minmax(300px, 0.95fr);
   gap: 18px;
+  align-items: start;
 }
 
 .chips {
@@ -231,66 +231,107 @@ small {
 }
 
 .graph-panel {
-  min-height: 660px;
+  min-height: 720px;
   overflow: hidden;
 }
 
-.graph-svg {
-  width: 100%;
-  height: 590px;
-  display: block;
+.graph-panel-3d {
   background: #f8fafb;
 }
 
-.edge {
-  stroke: #7f8d9a;
-  opacity: 0.52;
+.graph-heading {
+  background: #ffffff;
 }
 
-.edge.soft {
-  stroke: #6ea0bf;
-  stroke-dasharray: 6 6;
-  opacity: 0.26;
+.graph-heading-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
-.node {
-  outline: none;
+.graph-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 3px;
+  border: 1px solid #cfd7df;
+  border-radius: 8px;
+  background: #eef3f6;
 }
 
-.node circle {
-  transition: fill 140ms ease, stroke 140ms ease, transform 140ms ease;
+.graph-mode-switch button {
+  min-width: 58px;
+  height: 30px;
+  border-radius: 6px;
+  background: transparent;
+  color: #4b5965;
 }
 
-.node text {
-  fill: #26313c;
+.graph-mode-switch button.active {
+  background: #22577a;
+  color: #ffffff;
+}
+
+.graph-spread-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  color: #4b5965;
+  font-size: 13px;
+}
+
+.graph-spread-control input {
+  width: 118px;
+  accent-color: #22577a;
+}
+
+.graph-spread-control output {
+  min-width: 34px;
+  color: #26313c;
+  font-weight: 700;
+  text-align: right;
+}
+
+.graph-viewport {
+  position: relative;
+  height: min(68vh, 720px);
+  min-height: 620px;
+  background: #f8fafb;
+  cursor: grab;
+  overflow: hidden;
+}
+
+.graph-viewport:active {
+  cursor: grabbing;
+}
+
+.graph-viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.graph-overlay {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: grid;
+  gap: 2px;
+  max-width: min(420px, calc(100% - 32px));
+  padding: 10px 12px;
+  border: 1px solid rgba(207, 215, 223, 0.88);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #26313c;
+  pointer-events: none;
+}
+
+.graph-overlay span {
+  color: #67717e;
   font-size: 12px;
-  paint-order: stroke;
-  stroke: #f8fafb;
-  stroke-width: 4px;
-  stroke-linejoin: round;
-}
-
-.node.selected circle:nth-of-type(2) {
-  stroke: #22577a;
-  stroke-width: 4px;
-}
-
-.risk-ring {
-  fill: transparent;
-  stroke: transparent;
-  stroke-width: 3px;
-}
-
-.risk-ring.low {
-  stroke: #e3b54a;
-}
-
-.risk-ring.medium {
-  stroke: #e8893c;
-}
-
-.risk-ring.high {
-  stroke: #d85b4a;
 }
 
 .legend {
@@ -390,6 +431,26 @@ small {
   gap: 8px;
 }
 
+.source-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.source-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 88px;
+  height: 32px;
+  border: 1px solid #cfd7df;
+  border-radius: 6px;
+  background: #f6f9fb;
+  color: #26313c;
+}
+
 .detail-block ul {
   margin: 10px 0 0;
   padding-left: 18px;
@@ -406,6 +467,54 @@ pre {
   color: #dce7f2;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.source-preview {
+  tab-size: 2;
+  white-space: pre;
+}
+
+.source-preview.expanded {
+  max-height: none;
+}
+
+.source-preview code {
+  font-family: "Cascadia Mono", "Fira Code", Consolas, "Liberation Mono", monospace;
+}
+
+.java-keyword {
+  color: #78b7ff;
+  font-weight: 700;
+}
+
+.java-type {
+  color: #ffd166;
+}
+
+.java-method {
+  color: #7bdff2;
+}
+
+.java-string {
+  color: #a8e6a3;
+}
+
+.java-number {
+  color: #f7b267;
+}
+
+.java-comment {
+  color: #8da1b4;
+  font-style: italic;
+}
+
+.java-annotation {
+  color: #ffadad;
+  font-weight: 600;
+}
+
+.java-identifier {
+  color: #dce7f2;
 }
 
 .smell-list {
@@ -487,12 +596,12 @@ pre {
   }
 }
 
-@media (max-width: 1280px) {
-  .workspace-grid {
-    grid-template-columns: minmax(280px, 360px) minmax(520px, 1fr);
+@media (max-width: 1080px) {
+  .lower-grid {
+    grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr);
   }
 
-  .details-panel {
+  .smells-panel {
     grid-column: 1 / -1;
   }
 }
@@ -510,15 +619,36 @@ pre {
     flex-direction: column;
   }
 
-  .workspace-grid {
+  .lower-grid {
     grid-template-columns: 1fr;
+  }
+
+  .graph-heading-tools {
+    width: 100%;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .legend {
+    justify-content: flex-start;
+    gap: 8px 10px;
+  }
+
+  .graph-spread-control {
+    width: 100%;
+  }
+
+  .graph-spread-control input {
+    flex: 1;
+    min-width: 120px;
   }
 
   .graph-panel {
     min-height: 520px;
   }
 
-  .graph-svg {
+  .graph-viewport {
+    min-height: 460px;
     height: 460px;
   }
 }

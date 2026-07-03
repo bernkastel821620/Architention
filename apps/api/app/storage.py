@@ -79,13 +79,14 @@ def get_node_detail(node_id: str) -> NodeDetailResponse:
         if edge.family == "soft" and (edge.source == node_id or edge.target == node_id)
     ]
     smells = [smell for smell in payload.smells if node_id in smell.nodeIds]
+    source_preview = _read_source_text(node.filePath) or node.sourcePreview
     return NodeDetailResponse(
         node=node,
         incomingEdges=incoming,
         outgoingEdges=outgoing,
         semanticNeighbors=semantic,
         smells=smells,
-        sourcePreview=node.sourcePreview,
+        sourcePreview=source_preview,
     )
 
 
@@ -132,3 +133,15 @@ def _analyze_response(payload: GraphPayload) -> AnalyzeResponse:
         },
     )
 
+
+def _read_source_text(file_path: str) -> str:
+    path = Path(file_path)
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        try:
+            return path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return ""

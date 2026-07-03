@@ -79,6 +79,7 @@ export default function App() {
     try {
       const response = await searchTopic(nextQuery, 20);
       setResults(response.results);
+      setSelectedNodeId((current) => current ?? response.results[0]?.nodeId ?? null);
       setStatus(`Search "${nextQuery}" returned ${response.results.length} ranked classes`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Search failed");
@@ -123,8 +124,15 @@ export default function App() {
         </div>
       </section>
 
-      <div className="workspace-grid">
-        <div className="left-column">
+      <div className="workspace-layout">
+        <GraphCanvas
+          graph={graph}
+          searchScores={scoreByNode}
+          selectedNodeId={selectedNodeId}
+          onSelectNode={setSelectedNodeId}
+        />
+
+        <div className="lower-grid">
           <SearchPanel
             query={query}
             onQueryChange={setQuery}
@@ -133,17 +141,10 @@ export default function App() {
             loading={searching}
             onSelectNode={setSelectedNodeId}
           />
+          <NodeDetails detail={detail} loading={loadingDetail} />
           <SmellList smells={graph?.smells ?? []} selectedNodeId={selectedNodeId} onSelectNode={setSelectedNodeId} />
         </div>
-        <GraphCanvas
-          graph={graph}
-          searchScores={scoreByNode}
-          selectedNodeId={selectedNodeId}
-          onSelectNode={setSelectedNodeId}
-        />
-        <NodeDetails detail={detail} loading={loadingDetail} />
       </div>
     </main>
   );
 }
-
